@@ -1,5 +1,6 @@
 package com.example.application.routing
 
+import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.http.content.*
 import io.ktor.server.response.*
@@ -8,13 +9,17 @@ import java.io.File
 
 fun Application.configureRouting() {
     routing {
-        // Serve static files from the "static" folder
+        // Serve static files
         staticResources("/static", "static")
-        get("/"){
-            val indexPage = application.environment.classLoader.getResource("static/index.html")
-            if (indexPage != null) {
-                call.respondFile(File(indexPage.toURI()))
+
+        get("/") {
+            val indexPageStream = application.environment.classLoader.getResourceAsStream("static/index.html")
+            if (indexPageStream != null) {
+                call.respondText(indexPageStream.reader().readText(), ContentType.Text.Html)
+            } else {
+                call.respond(HttpStatusCode.NotFound, "index.html not found")
             }
         }
     }
 }
+
