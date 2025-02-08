@@ -19,7 +19,7 @@ WORKDIR /home/gradle/src
 RUN gradle buildFatJar --no-daemon
 
 # Stage 3: Create the Runtime Image
-FROM openjdk:11 AS runtime
+FROM openjdk:21 AS runtime
 EXPOSE 8080
 RUN mkdir /app
 COPY --from=build /home/gradle/src/build/libs/*.jar /app/ng.futohis.futo-his.jar

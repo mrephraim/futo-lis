@@ -7,11 +7,11 @@ import org.jetbrains.exposed.sql.Database
 
 fun Application.configureDatabases() {
     Database.connect(
-        url = "jdbc:postgresql://localhost:5433/futo-his",
+        url = "postgresql://ephraim:9V9xYm64wWmOVu2XTkdF4e5kZmGdzMz8@dpg-cujqk03tq21c73e1apgg-a/futohis",
         driver = "org.postgresql.Driver",
-        user = "postgres",
+        user = "ephraim",
         //store in environment
-        password = "12345678"
+        password = "9V9xYm64wWmOVu2XTkdF4e5kZmGdzMz8"
     )
     //setup database tables
     createTableIfNotExists(EmrUsers)
