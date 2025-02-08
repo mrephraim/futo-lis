@@ -7,7 +7,7 @@ import org.jetbrains.exposed.sql.Database
 
 fun Application.configureDatabases() {
     Database.connect(
-        url = "postgresql://ephraim:9V9xYm64wWmOVu2XTkdF4e5kZmGdzMz8@dpg-cujqk03tq21c73e1apgg-a/futohis",
+        url = "jdbc:postgresql://ephraim:9V9xYm64wWmOVu2XTkdF4e5kZmGdzMz8@dpg-cujqk03tq21c73e1apgg-a:5432/futohis",
         driver = "org.postgresql.Driver",
         user = "ephraim",
         //store in environment
