@@ -4,7 +4,7 @@
 <body>
 
 <div class="container my-5">
-    <div class="mb-5" th:insert="fragments :: headerOne(title='Edit Patient Information - FUTO EMR')"></div>
+    <div class="mb-5" th:insert="fragments :: headerOne(title='EDIT PATIENT - FUTO EMR')"></div>
     <div th:if="${updateSession != null}">
         <div class="text-danger" th:if="${#lists.size(updateSession.errors) > 0}">
             <ul>

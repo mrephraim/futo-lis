@@ -40,10 +40,13 @@
     background-color: #e0e0e0;
     color: #333;
 }
+#page-content {
+        display: none; /* Hide content until data is fetched */
+    }
 
 </style>
 <body>
-<div class="container">
+<div class="container" id="page-content">
     <div class="row justify-content-center">
         <div class="col-lg-8">
             <div class="mb-5" th:insert="fragments :: headerOne(title='Welcome to LIS Admin Portal')"></div>
@@ -133,11 +136,11 @@
 
                 <!-- View Lab Setup Card -->
                 <div class="col-md-6 mb-3 onlyAdmin">
-                    <a href="#" class="text-decoration-none" style="color:black;">
+                    <a href="#" class="text-decoration-none" style="color:gray;">
                         <div class="card text-center shadow p-4">
                             <div class="card-body">
-                                <h5 class="card-title">View Lab Setup (Login in to host server)</h5>
-                                <i class="bi bi-gear" style="font-size: 3rem; color: #17a2b8;"></i>
+                                <h5 class="card-title">LIS Setup <br/><small>(Login in to host server to access)</smaLl></h5>
+                                <i class="bi bi-gear" style="font-size: 2rem; color: gray;"></i>
                             </div>
                         </div>
                     </a>
@@ -224,6 +227,14 @@
 <!--                    </a>-->
 <!--                </div>-->
             </div>
+
+            <div class="row justify-content-end mt-4">
+                <div class="col-md-3">
+                    <button class="btn btn-danger btn-md" style="width: 100%;" data-bs-toggle="modal" data-bs-target="#logoutModal">
+                        <i class="bi bi-box-arrow-right" style="font-size: 1.5rem;"></i> Logout
+                    </button>
+                </div>
+            </div>
         </div>
 
     <!-- Logout Modal -->
@@ -263,8 +274,12 @@
                     div.style.display = 'none';
                 });
             }
+
+            // Show page content after data is fetched
+            document.getElementById('page-content').style.display = 'block';
         } catch (error) {
             console.error('Error fetching data:', error);
+            document.getElementById('page-content').style.display = 'block'; // Show content even if error occurs
         }
     };
 </script>
