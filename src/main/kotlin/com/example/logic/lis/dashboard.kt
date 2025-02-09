@@ -1,16 +1,14 @@
 package com.example.logic.lis
 
-import com.example.data.database.EmrUsers
+
 import com.example.data.database.LabOrders
 import com.example.data.database.LisUsers
-import com.example.logic.emr.EmrLoginSessionData
 import io.ktor.http.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
 import io.ktor.server.thymeleaf.*
 import kotlinx.serialization.Serializable
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 
