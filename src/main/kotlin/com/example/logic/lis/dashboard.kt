@@ -1,11 +1,16 @@
 package com.example.logic.lis
 
+import com.example.data.database.EmrUsers
 import com.example.data.database.LabOrders
+import com.example.data.database.LisUsers
+import com.example.logic.emr.EmrLoginSessionData
+import io.ktor.http.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
 import io.ktor.server.thymeleaf.*
 import kotlinx.serialization.Serializable
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 
@@ -39,6 +44,30 @@ fun Route.lisDashboard(){
                 .count()
         }
         call.respond(count)
+    }
+
+    get("/lis/user-type") {
+        val session = call.sessions.get<LisLoginSessionData>()
+        val userId = session?.userId
+
+        if (userId == null) {
+            call.respond(HttpStatusCode.Unauthorized, "User not logged in")
+            return@get
+        }
+
+        val userType = transaction {
+            LisUsers
+                .select(LisUsers.type)
+                .where { LisUsers.id eq userId }
+                .map { it[LisUsers.type] }
+                .firstOrNull()
+        }
+
+        if (userType == null) {
+            call.respond(HttpStatusCode.NotFound, "User not found")
+        } else {
+            call.respond(mapOf("type" to userType))
+        }
     }
 
 

@@ -54,7 +54,7 @@
                         <div class="d-flex align-items-center">
                             <i class="bi bi-person-circle" style="font-size: 2rem; margin-right: 10px;"></i>
                             <div>
-                                <h6 class="mb-0" th:text="${adminName}"></h6>
+                                <h6 class="mb-0" th:text="${userName}"></h6>
                             </div>
                         </div>
                     </div>
@@ -120,7 +120,7 @@
                 </div>
 
                 <!-- Create New EMR User Card -->
-                <div class="col-md-6 mb-3">
+                <div class="col-md-6 mb-3 onlyAdmin">
                     <a href="/lis/new-user" class="text-decoration-none" style="color:black;">
                         <div class="card text-center shadow p-4 hover-card">
                             <div class="card-body">
@@ -132,11 +132,11 @@
                 </div>
 
                 <!-- View Lab Setup Card -->
-                <div class="col-md-6 mb-3">
-                    <a href="/lis/lab-setup" class="text-decoration-none" style="color:black;">
-                        <div class="card text-center shadow p-4 hover-card">
+                <div class="col-md-6 mb-3 onlyAdmin">
+                    <a href="#" class="text-decoration-none" style="color:black;">
+                        <div class="card text-center shadow p-4">
                             <div class="card-body">
-                                <h5 class="card-title">View Lab Setup</h5>
+                                <h5 class="card-title">View Lab Setup (Login in to host server)</h5>
                                 <i class="bi bi-gear" style="font-size: 3rem; color: #17a2b8;"></i>
                             </div>
                         </div>
@@ -157,10 +157,10 @@
                 </div>
 
             <!-- Lab Setup Section -->
-            <div class="mb-3">
+            <div class="mb-3 onlyAdmin">
                 <h3 class="text-center">Lab Setup</h3>
             </div>
-            <div class="row mb-4">
+            <div class="row mb-4 onlyAdmin">
                 <div class="col-md-3 mb-3">
                     <a href="/lis/new-test" class="text-decoration-none">
                         <div class="card text-center shadow-sm p-3">
@@ -252,6 +252,23 @@
 <div th:insert="fragments :: footer"></div>
 </div>
 <script>
+    window.onload = async function () {
+        try {
+            // Fetch user type
+            let userResponse = await fetch('/lis/user-type');
+            let userData = await userResponse.json();
+
+            if (userData.type === "lab_attendant") {
+                document.querySelectorAll('.onlyAdmin').forEach(div => {
+                    div.style.display = 'none';
+                });
+            }
+        } catch (error) {
+            console.error('Error fetching data:', error);
+        }
+    };
+</script>
+<script>
     // Function to fetch the count of pending requisitions
     function fetchPendingRequisitions() {
         fetch('/lis/api/requisitions/pending-count')
@@ -271,7 +288,6 @@
     // Set up an interval to refresh the count every 5 seconds
     setInterval(fetchPendingRequisitions, 5000);
 </script>
-
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         // Fetch the count from the Ktor route
