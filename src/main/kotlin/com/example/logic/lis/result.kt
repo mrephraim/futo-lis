@@ -142,6 +142,38 @@ fun Route.result(){
         call.respond(response)
     }
 
+    get("lis/process-sample") {
+        val sampleId = call.request.queryParameters["id"]?.trim()
+
+        // Check if sampleId is empty
+        if (sampleId.isNullOrEmpty()) {
+            call.respond(HttpStatusCode.BadRequest, "Sample ID is required")
+            return@get
+        }
+
+        // Safely convert sampleId to Int
+        val sampleIdInt = sampleId.toIntOrNull()
+        if (sampleIdInt == null) {
+            call.respond(HttpStatusCode.BadRequest, "Invalid Sample ID")
+            return@get
+        }
+
+        // Query the database safely
+        val requisitionId = transaction {
+            Requisitions
+                .selectAll().where { Requisitions.sampleId eq sampleIdInt } // ✅ CORRECT CONDITION
+                .map { it[Requisitions.id] }
+                .firstOrNull()
+        }
+
+        if (requisitionId != null) {
+            call.respondRedirect("/lis/process-result?id=$requisitionId")
+        } else {
+            call.respond(HttpStatusCode.NotFound, "No requisition found for sample ID: $sampleIdInt")
+        }
+    }
+
+
 
 
 
