@@ -86,6 +86,7 @@ fun addPatient(patient: Patient): Boolean {
                 it[firstName] = patient.firstName
                 it[middleName] = patient.middleName // nullable
                 it[school] = patient.school
+                it[email] = patient.email
                 it[department] = patient.department
                 it[phoneNo] = patient.phoneNo
                 it[dob] = patient.dob

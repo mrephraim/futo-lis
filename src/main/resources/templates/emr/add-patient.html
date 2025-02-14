@@ -8,7 +8,7 @@
     <div class="d-flex justify-content-start mt-3 mb-3">
         <a href="/emr/dashboard/" class="btn btn-secondary me-3">Go Back</a>
     </div>
-    <form action="/emr/add-patient" method="post">
+    <form id="addPatientForm">
         <div th:if="${errors}">
             <ul>
                 <li class="text-danger" th:each="error : ${errors}" th:text="${error}"></li>
@@ -162,11 +162,55 @@
         </div>
         <div class="d-flex justify-content-end mt-3 mb-3">
             <a href="/emr/dashboard/" class="btn btn-secondary me-3">Go Back</a>
-            <button type="submit" class="btn btn-success" style="width:20%;">Submit</button>
+            <button type="submit" id="submitButton" class="btn btn-success" style="width:20%;">Submit</button>
         </div>
+        <div id="messageBox"></div>
     </form>
 </div>
 
 <div th:insert="fragments :: footer"></div>
+<script>
+    document.getElementById("addPatientForm").addEventListener("submit", async function (event) {
+    event.preventDefault(); // Prevent default form submission
+
+    const formData = new FormData(this);
+    const submitButton = document.getElementById("submitButton"); // Get the submit button
+    const messageBox = document.getElementById("messageBox");
+
+    // Disable button and show loading spinner
+    submitButton.disabled = true;
+    submitButton.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Processing...`;
+
+    try {
+        const response = await fetch("/emr/add-patient", {
+            method: "POST",
+            body: new URLSearchParams(formData) // Ensure form data is sent correctly
+        });
+
+        const result = await response.json(); // Parse JSON response
+        messageBox.innerHTML = ""; // Clear previous messages
+
+        if (result.success) {
+            messageBox.innerHTML = `<div class="alert alert-success">${result.message}</div>`;
+            this.reset(); // Reset form on success
+        } else {
+            let errorList = `<div class="alert alert-danger"><ul>`;
+            result.errors.forEach(error => {
+                errorList += `<li>${error}</li>`;
+            });
+            errorList += `</ul></div>`;
+            messageBox.innerHTML = errorList;
+        }
+    } catch (error) {
+        console.error("Error:", error);
+        messageBox.innerHTML = `<div class="alert alert-danger">Something went wrong. Please try again.</div>`;
+    } finally {
+        // Restore button state
+        submitButton.disabled = false;
+        submitButton.innerHTML = `Add Patient`;
+    }
+});
+
+</script>
 </body>
 </html>

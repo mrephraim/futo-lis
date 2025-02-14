@@ -20,6 +20,11 @@ data class AddPatientSessionData(
     val errors: MutableList<String> = mutableListOf(),
 )
 
+@Serializable
+data class ApiResponse(val success: Boolean, val message: String, val errors: List<String>? = null)
+
+
+
 fun Route.patientBasicManagement(){
     get("/emr/add-patient") {
         val session = call.sessions.get<EmrLoginSessionData>()
@@ -45,140 +50,96 @@ fun Route.patientBasicManagement(){
         val parameters = call.receiveParameters()
         val errors = mutableListOf<String>()
 
-        // Sanitize and validate inputs
         val regNo = parameters["regNo"]?.trim()?.takeIf {
             it.length == 11 && it.all { char -> char.isDigit() }
-        } ?: run {
-            errors.add("Invalid registration number, must be exactly 11 digits.")
-            null
+        } ?: errors.add("Invalid registration number, must be exactly 11 digits.")
+
+        if (doesPatientExist(regNo.toString())) {
+            errors.add("Patient already exists. Please use the edit-info feature on the dashboard.")
         }
 
-        if (regNo != null && doesPatientExist(regNo)) {
-            errors.add("Patient already exists, please use the edit-info feature on the dashboard instead.")
-        }
+        val firstName = parameters["firstName"]?.trim()?.takeIf { it.matches(Regex("[A-Za-z]+")) }
+            ?: errors.add("Valid first name is required.")
 
-        val firstName = parameters["firstName"]?.trim()?.takeIf { it.matches(Regex("[A-Za-z]+")) } ?: run {
-            errors.add("Valid first name is required.")
-            null
-        }
+        val surName = parameters["surName"]?.trim()?.takeIf { it.matches(Regex("[A-Za-z]+")) }
+            ?: errors.add("Valid surname is required.")
 
-        val surName = parameters["surName"]?.trim()?.takeIf { it.matches(Regex("[A-Za-z]+")) } ?: run {
-            errors.add("Valid surname is required.")
-            null
-        }
+        val middleName = parameters["middleName"]?.trim()?.takeIf { it.matches(Regex("[A-Za-z]*")) }
 
-        val middleName = parameters["middleName"]?.trim()?.takeIf { it.matches(Regex("[A-Za-z]*")) } // Optional field
+        val school = parameters["schools"]?.takeIf { it.isNotBlank() }
+            ?: errors.add("School selection is required.")
 
-        val school = parameters["schools"]?.takeIf { it.isNotBlank() } ?: run {
-            errors.add("School selection is required.")
-            null
-        }
+        val department = parameters["departments"]?.takeIf { it.isNotBlank() }
+            ?: errors.add("Department selection is required.")
 
-        val department = parameters["departments"]?.takeIf { it.isNotBlank() } ?: run {
-            errors.add("Department selection is required.")
-            null
-        }
-        val email = parameters["email"]?.takeIf { it.isNotBlank() } ?: run {
-            errors.add("Email is required.")
-            null
-        }
+        val email = parameters["email"]?.takeIf { it.isNotBlank() }
+            ?: errors.add("Email is required.")
 
-        val phoneNo = parameters["phoneNo"]?.takeIf { it.matches(Regex("\\d{10,15}")) } ?: run {
-            errors.add("A valid phone number is required.")
-            null
-        }
+        val phoneNo = parameters["phoneNo"]?.takeIf { it.matches(Regex("\\d{10,15}")) }
+            ?: errors.add("A valid phone number is required.")
 
-        // Date validation
-        val dobDay = parameters["dob_day"]?.toIntOrNull()?.takeIf { it in 1..31 } ?: run {
-            errors.add("Day of birth is required.")
-            null
-        }
-        val dobMonth = parameters["dob_month"]?.toIntOrNull()?.takeIf { it in 1..12 } ?: run {
-            errors.add("Month of birth is required.")
-            null
-        }
-        val dobYear = parameters["dob_year"]?.toIntOrNull()?.takeIf { it in 1900..(LocalDate.now().year) } ?: run {
-            errors.add("Year of birth is required.")
-            null
-        }
-        val dob = if (dobDay != null && dobMonth != null && dobYear != null) {
-            "$dobYear-$dobMonth-$dobDay"
-        } else {
-            null
-        }
+        val dobDay = parameters["dob_day"]?.toIntOrNull()?.takeIf { it in 1..31 }
+            ?: errors.add("Day of birth is required.")
 
-        val sex = parameters["sex"]?.takeIf { it in listOf("Male", "Female", "Other") } ?: run {
-            errors.add("Sex selection is required.")
-            null
-        }
+        val dobMonth = parameters["dob_month"]?.toIntOrNull()?.takeIf { it in 1..12 }
+            ?: errors.add("Month of birth is required.")
 
-        val maritalStatus = parameters["maritalStatus"]?.takeIf { it in listOf("Single", "Married", "Divorced", "Widowed") } ?: run {
-            errors.add("Marital status is required.")
-            null
-        }
+        val dobYear = parameters["dob_year"]?.toIntOrNull()?.takeIf { it in 1900..(LocalDate.now().year) }
+            ?: errors.add("Year of birth is required.")
 
-        val hostelAddress = parameters["hostelAddress"]?.trim() // Optional field
-        val homeTown = parameters["homeTown"]?.trim()?.takeIf { it.isNotBlank() } ?: run {
-            errors.add("Home town is required.")
-            null
-        }
+        val dob = "$dobYear-$dobMonth-$dobDay"
 
-        val lga = parameters["lga"]?.trim()?.takeIf { it.isNotBlank() } ?: run {
-            errors.add("Local Government Area is required.")
-            null
-        }
+        val sex = parameters["sex"]?.takeIf { it in listOf("Male", "Female", "Other") }
+            ?: errors.add("Sex selection is required.")
 
-        val state = parameters["state"]?.trim()?.takeIf { it.isNotBlank() } ?: run {
-            errors.add("State is required.")
-            null
-        }
+        val maritalStatus = parameters["maritalStatus"]?.takeIf { it in listOf("Single", "Married", "Divorced", "Widowed") }
+            ?: errors.add("Marital status is required.")
 
-        val country = parameters["country"]?.trim()?.takeIf { it.isNotBlank() } ?: run {
-            errors.add("Country is required.")
-            null
-        }
+        val hostelAddress = parameters["hostelAddress"]?.trim()
+        val homeTown = parameters["homeTown"]?.trim()?.takeIf { it.isNotBlank() }
+            ?: errors.add("Home town is required.")
 
-        // If there are validation errors, save them to the session and redirect back to the form
+        val lga = parameters["lga"]?.trim()?.takeIf { it.isNotBlank() }
+            ?: errors.add("Local Government Area is required.")
+
+        val state = parameters["state"]?.trim()?.takeIf { it.isNotBlank() }
+            ?: errors.add("State is required.")
+
+        val country = parameters["country"]?.trim()?.takeIf { it.isNotBlank() }
+            ?: errors.add("Country is required.")
+
+        // **Return validation errors if any**
         if (errors.isNotEmpty()) {
-            call.sessions.set(AddPatientSessionData(errors = errors.toMutableList())) // Store errors in session
-            call.respondRedirect("/emr/add-patient")
+            call.respond(ApiResponse(success = false, message = "Validation errors occurred.", errors = errors))
+            return@post
+        }
+
+        // **Create patient object**
+        val patient = Patient(
+            regNo = regNo.toString(),
+            firstName = firstName.toString(),
+            surName = surName.toString(),
+            middleName = middleName,
+            school = school.toString(),
+            department = department.toString(),
+            phoneNo = phoneNo.toString(),
+            email = email.toString(),
+            dob = dob,
+            sex = sex.toString(),
+            maritalStatus = maritalStatus.toString(),
+            hostelAddress = hostelAddress,
+            homeTown = homeTown.toString(),
+            lga = lga.toString(),
+            state = state.toString(),
+            country = country.toString()
+        )
+
+        val success = addPatient(patient)
+
+        if (success) {
+            call.respond(ApiResponse(success = true, message = "Patient added successfully!"))
         } else {
-            // Create the Patient instance with the correct types
-            val patient = Patient(
-                regNo = regNo ?: throw IllegalStateException("Registration number is required"), // This should not be null if validation passed
-                firstName = firstName ?: throw IllegalStateException("First name is required"),
-                surName = surName ?: throw IllegalStateException("Surname is required"),
-                middleName = middleName,
-                school = school ?: throw IllegalStateException("School is required"),
-                department = department ?: throw IllegalStateException("Department is required"),
-                phoneNo = phoneNo ?: throw IllegalStateException("Phone number is required"),
-                email = email ?: throw IllegalStateException("Email is required"),
-                dob = dob ?: throw IllegalStateException("Date of birth is required"),
-                sex = sex ?: throw IllegalStateException("Sex is required"),
-                maritalStatus = maritalStatus ?: throw IllegalStateException("Marital status is required"),
-                hostelAddress = hostelAddress,
-                homeTown = homeTown ?: throw IllegalStateException("Home town is required"),
-                lga = lga ?: throw IllegalStateException("LGA is required"),
-                state = state ?: throw IllegalStateException("State is required"),
-                country = country ?: throw IllegalStateException("Country is required")
-            )
-
-            val success = addPatient(patient)
-            if (success) {
-                // Retrieve the existing session to clear errors
-                val currentSessionData = call.sessions.get<AddPatientSessionData>()
-
-                // If session data exists, clear the errors list
-                if (currentSessionData != null) {
-                    call.sessions.set(AddPatientSessionData(errors = mutableListOf())) // Clear errors by setting it to an empty list
-                }
-
-                call.respondRedirect("/emr/patient-added")
-            } else {
-                errors.add("Failed to add patient. Please try again.")
-                call.sessions.set(AddPatientSessionData(errors = errors.toMutableList())) // Store errors in session
-                call.respondRedirect("/emr/add-patient")
-            }
+            call.respond(ApiResponse(success = false, message = "Failed to add patient. Please try again."))
         }
     }
 

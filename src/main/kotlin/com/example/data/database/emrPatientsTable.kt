@@ -1,11 +1,7 @@
 package com.example.data.database
 
-import com.example.data.database.EmrPatientsGuardians.uniqueIndex
-import kotlinx.serialization.Serializable
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+
 import org.jetbrains.exposed.sql.Table
-import org.jetbrains.exposed.sql.selectAll
-import org.jetbrains.exposed.sql.transactions.transaction
 
 object EmrPatients : Table() {
     val id = integer("id").autoIncrement() // Primary Key

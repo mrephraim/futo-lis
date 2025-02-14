@@ -1,7 +1,6 @@
 package com.example.data.database
 
-import com.example.data.database.EmrUsers.autoIncrement
-import com.sun.org.apache.xalan.internal.lib.ExsltDatetime.date
+
 import org.jetbrains.exposed.sql.Table
 
 
