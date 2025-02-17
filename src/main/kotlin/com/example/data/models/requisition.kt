@@ -368,32 +368,40 @@ fun fetchParametersWithValues(requisitionId: Int): FetchParametersResponse {
 fun processFormSubmission(request: FormSubmissionRequest): Boolean {
     return try {
         transaction {
+            println("Starting form submission processing for requisitionId: ${request.requisitionId}")
+
             val existingRecord = LabResults
-                .selectAll()
-                .where { LabResults.requisitionId eq request.requisitionId }
+                .select { LabResults.requisitionId eq request.requisitionId }
                 .firstOrNull()
 
             val serializedParameters = Json.encodeToString(request.parameters)
             val newComments = request.comments
 
             if (existingRecord != null) {
-                // Deserialize existing comments
+                println("Existing record found. Updating record for requisitionId: ${request.requisitionId}")
+
                 val existingCommentsJson = existingRecord[LabResults.comments]
-                val existingComments = if (existingCommentsJson.isNotEmpty()) {
-                    Json.decodeFromString<List<Comment>>(existingCommentsJson)
-                } else {
+                val existingComments = try {
+                    if (existingCommentsJson.isNotEmpty()) {
+                        Json.decodeFromString<List<Comment>>(existingCommentsJson)
+                    } else emptyList()
+                } catch (e: Exception) {
+                    println("Error decoding existing comments: ${e.message}")
                     emptyList()
                 }
 
                 val combinedComments = existingComments + newComments
                 val serializedCombinedComments = Json.encodeToString(combinedComments)
 
-                LabResults.update({ LabResults.requisitionId eq request.requisitionId }) {
+                val updatedRows = LabResults.update({ LabResults.requisitionId eq request.requisitionId }) {
                     it[LabResults.parameters] = serializedParameters
                     it[LabResults.comments] = serializedCombinedComments
                 }
+
+                println("Updated rows in LabResults: $updatedRows")
             } else {
-                // Insert new record
+                println("No existing record found. Inserting new record for requisitionId: ${request.requisitionId}")
+
                 val serializedComments = Json.encodeToString(newComments)
                 LabResults.insert {
                     it[LabResults.requisitionId] = request.requisitionId
@@ -409,40 +417,50 @@ fun processFormSubmission(request: FormSubmissionRequest): Boolean {
                 .map { it[Requisitions.orderId] }
                 .firstOrNull()
 
-            if (orderId != null) {
-                if (request.status == 2) {
-                    // Update requisition status to "Published"
-                    val updatedRows = Requisitions.update({ Requisitions.id eq request.requisitionId }) {
-                        it[Requisitions.rstatus] = 2
-                    }
-                    if (updatedRows == 0) {
-                        throw IllegalStateException("Failed to update requisition status for ID: ${request.requisitionId}")
-                    }
+            println("Fetched orderId: $orderId for requisitionId: ${request.requisitionId}")
 
-                    // Update Lab Orders table to "Published"
-                    LabOrders.update({ LabOrders.id eq orderId }) {
+            if (request.status == 2) {
+                println("Updating requisition status to 'Published'")
+
+                val updatedRows = Requisitions.update({ Requisitions.id eq request.requisitionId }) {
+                    it[Requisitions.rstatus] = 2
+                }
+
+                println("Updated requisition status rows: $updatedRows")
+
+                if (updatedRows == 0) {
+                    throw IllegalStateException("Failed to update requisition status for ID: ${request.requisitionId}")
+                }
+
+                if (orderId != null) {
+                    val orderUpdatedRows = LabOrders.update({ LabOrders.id eq orderId }) {
                         it[LabOrders.status] = "Published"
                     }
-                } else {
-                    // If the status is not 2, check if current status is not "Processing"
-                    val currentStatus = LabOrders
-                        .select(LabOrders.status)
-                        .where { LabOrders.id eq orderId }
-                        .map { it[LabOrders.status] }
-                        .firstOrNull()
+                    println("Updated LabOrders to 'Published' rows: $orderUpdatedRows")
+                }
+            } else if (orderId != null) {
+                println("Checking current status of lab order for orderId: $orderId")
 
-                    if (currentStatus != "Processing") {
-                        LabOrders.update({ LabOrders.id eq orderId }) {
-                            it[LabOrders.status] = "Processing"
-                        }
+                val currentStatus = LabOrders
+                    .select(LabOrders.status)
+                    .where { LabOrders.id eq orderId }
+                    .map { it[LabOrders.status] }
+                    .firstOrNull()
+
+                if (currentStatus != "Processing") {
+                    val statusUpdatedRows = LabOrders.update({ LabOrders.id eq orderId }) {
+                        it[LabOrders.status] = "Processing"
                     }
+
+                    println("Updated LabOrders to 'Processing' rows: $statusUpdatedRows")
                 }
             }
         } // End of transaction
 
         // Only send an email if status == 2
         if (request.status == 2) {
-            // Fetch requisition details
+            println("Preparing to send email for published result...")
+
             val (regNo, physicianId, labTest) = getRequisitionDetails(request.requisitionId) ?: return false
             val (firstName, surname, patientEmail) = getPatientDetails(regNo) ?: Triple(null, null, null)
             val doctorEmail = physicianId?.let { getDoctorEmail(it.toString()) }
@@ -453,8 +471,13 @@ fun processFormSubmission(request: FormSubmissionRequest): Boolean {
             if (!patientEmail.isNullOrEmpty()) recipients.add(patientEmail)
             if (!doctorEmail.isNullOrEmpty()) recipients.add(doctorEmail)
 
+            println("Email recipients: $recipients")
+
             // If there are no valid recipients, don't send the email
-            if (recipients.isEmpty()) return false
+            if (recipients.isEmpty()) {
+                println("No valid recipients found. Skipping email.")
+                return false
+            }
 
             // Craft email message
             val subject = "Lab Results Available - Requisition ID: ${request.requisitionId}"
@@ -475,11 +498,17 @@ fun processFormSubmission(request: FormSubmissionRequest): Boolean {
             """.trimIndent()
 
             val (email, password) = getEmailCredentials()
-            return sendEmail(subject, message, recipients, email, password) // Return email status
+            val emailSent = sendEmail(subject, message, recipients, email, password)
+
+            println("Email sent status: $emailSent")
+
+            return emailSent
         }
 
+        println("Form submission processed successfully.")
         true // If not sending an email, return true
     } catch (e: Exception) {
+        println("Error in processFormSubmission: ${e.localizedMessage}")
         e.printStackTrace()
         false
     }
