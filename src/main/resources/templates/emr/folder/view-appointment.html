@@ -195,8 +195,6 @@
                         `;
                         labOrdersBody.appendChild(row);
                     });
-                } else {
-                    document.getElementById("labOrdersSection").style.display = "none"; // Hide section if no orders
                 }
             })
             .catch(error => console.error("Error fetching lab orders:", error));
