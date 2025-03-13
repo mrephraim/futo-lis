@@ -7,32 +7,32 @@ import org.jetbrains.exposed.sql.Database
 
 fun Application.configureDatabases() {
     Database.connect(
-        url = "jdbc:postgresql://dpg-cujqk03tq21c73e1apgg-a:5432/futohis",
+        url = "jdbc:postgresql://dpg-cv969opu0jms73efqbq0-a:5432/futo_his_db",
         driver = "org.postgresql.Driver",
-        user = "ephraim",
-        password = "9V9xYm64wWmOVu2XTkdF4e5kZmGdzMz8"
+        user = "futo_his_db_user",
+        password = "DwnjZrxuZ8Eq2bnA3qOuRheSwvEzMLf0"
     )
 
     //setup database tables
-//    createTableIfNotExists(EmrUsers)
-//    createTableIfNotExists(EmrDoctors)
-//    createTableIfNotExists(EmrPatients)
-//    createTableIfNotExists(EmrPatientsGuardians)
-//    createTableIfNotExists(EmrPatientsKins)
-//    createTableIfNotExists(EmrPatientMedicalHistory)
-//    createTableIfNotExists(EmrAppointments)
-//    createTableIfNotExists(LisUsers)
-//    createTableIfNotExists(LabCategories)
-//    createTableIfNotExists(LabParameters)
-//    createTableIfNotExists(LabParameterUnits)
-//    createTableIfNotExists(LabParameterComments)
-//    createTableIfNotExists(LabSampleTable)
-//    createTableIfNotExists(LabTests)
-//    createTableIfNotExists(LabAttendants)
-//    createTableIfNotExists(Requisitions)
-//    createTableIfNotExists(LabResults)
-//    createTableIfNotExists(BioHazardIncidents)
-//    createTableIfNotExists(LabOrders)
+    createTableIfNotExists(EmrUsers)
+    createTableIfNotExists(EmrDoctors)
+    createTableIfNotExists(EmrPatients)
+    createTableIfNotExists(EmrPatientsGuardians)
+    createTableIfNotExists(EmrPatientsKins)
+    createTableIfNotExists(EmrPatientMedicalHistory)
+    createTableIfNotExists(EmrAppointments)
+    createTableIfNotExists(LisUsers)
+    createTableIfNotExists(LabCategories)
+    createTableIfNotExists(LabParameters)
+    createTableIfNotExists(LabParameterUnits)
+    createTableIfNotExists(LabParameterComments)
+    createTableIfNotExists(LabSampleTable)
+    createTableIfNotExists(LabTests)
+    createTableIfNotExists(LabAttendants)
+    createTableIfNotExists(Requisitions)
+    createTableIfNotExists(LabResults)
+    createTableIfNotExists(BioHazardIncidents)
+    createTableIfNotExists(LabOrders)
 
 
 
